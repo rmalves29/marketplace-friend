@@ -190,8 +190,9 @@ async function fetchShein(from: string, to: string): Promise<NormalizedOrder[]> 
       orders.push({
         channel: "shein",
         id: no,
+        // A Shein devolve a data de criação no fuso da China (UTC+8), mesmo filtrando em BRT.
         date: new Date(
-          `${(meta?.orderCreateTime ?? "").replace(" ", "T") || `${from}T00:00:00`}${BRT}`,
+          `${(meta?.orderCreateTime ?? "").replace(" ", "T") || `${from}T11:00:00`}+08:00`,
         ).toISOString(),
         status,
         cancelled: status === "6",
