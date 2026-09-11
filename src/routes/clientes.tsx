@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { Chip } from "@/components/crm/Chip";
-import { chan, money } from "@/lib/crm";
+import { usePeriod } from "@/components/crm/PeriodFilter";
+import { money, dateTime, tiopsChan } from "@/lib/crm";
+import { formatRange } from "@/lib/period";
+import { tiopsOrders } from "@/lib/tiops.functions";
 
 export const Route = createFileRoute("/clientes")({
   head: () => ({
@@ -12,12 +14,13 @@ export const Route = createFileRoute("/clientes")({
       { title: "Clientes | Tiops CRM" },
       {
         name: "description",
-        content: "Base unificada de clientes dos seus marketplaces com gasto total e histórico.",
+        content:
+          "Compradores identificados nos pedidos reais de Mercado Livre, TikTok Shop e Shopee, com total gasto e número de pedidos.",
       },
       { property: "og:title", content: "Clientes | Tiops CRM" },
       {
         property: "og:description",
-        content: "Veja quem compra em cada canal, quanto gastou e como entrar em contato.",
+        content: "Veja quem mais compra nos seus canais e quanto cada pessoa já gastou.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,69 +30,70 @@ export const Route = createFileRoute("/clientes")({
 });
 
 function Clientes() {
-  const [search, setSearch] = useState("");
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["customers"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("customers")
-        .select("*")
-        .order("total_spent", { ascending: false });
-      return data ?? [];
-    },
+  const { range, control } = usePeriod("month");
+  const load = useServerFn(tiopsOrders);
+
+  const { data, isFetching } = useQuery({
+    queryKey: ["tiops-orders", range.from, range.to],
+    queryFn: () => load({ data: { from: range.from, to: range.to } }),
+    staleTime: 5 * 60 * 1000,
   });
 
-  const filtered = data.filter((c) =>
-    `${c.name} ${c.email ?? ""} ${c.city ?? ""}`.toLowerCase().includes(search.toLowerCase()),
-  );
+  const map = new Map<
+    string,
+    { name: string; channel: string; orders: number; total: number; last: string }
+  >();
+  for (const o of data?.orders ?? []) {
+    if (o.cancelled || !o.customer) continue;
+    const key = `${o.channel}:${o.customer}`;
+    const cur =
+      map.get(key) ??
+      { name: o.customer, channel: o.channel, orders: 0, total: 0, last: o.date };
+    cur.orders += 1;
+    cur.total += o.total;
+    if (o.date > cur.last) cur.last = o.date;
+    map.set(key, cur);
+  }
+  const customers = [...map.values()].sort((a, b) => b.total - a.total);
 
   return (
     <AppShell
       title="Clientes"
-      subtitle="Todos os compradores reunidos em uma base só"
-      actions={
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar cliente…"
-          className="w-56 rounded-lg border border-input bg-card px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"
-        />
-      }
+      subtitle={`Compradores identificados · ${formatRange(range.from, range.to)}`}
+      actions={control}
     >
+      <p className="mb-4 text-xs text-muted-foreground">
+        Mercado Livre e TikTok Shop informam o nome do comprador; a Shopee informa apenas o apelido
+        do usuário e a Shein não expõe o comprador ao vendedor.
+      </p>
+
       <Panel>
-        {isLoading ? (
+        {isFetching && !data ? (
           <EmptyState message="Carregando clientes…" />
-        ) : filtered.length === 0 ? (
-          <EmptyState message="Nenhum cliente encontrado." />
+        ) : customers.length === 0 ? (
+          <EmptyState message="Nenhum cliente identificado no período." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-5 py-3 font-medium">Cliente</th>
-                  <th className="px-5 py-3 font-medium">Contato</th>
                   <th className="px-5 py-3 font-medium">Canal</th>
-                  <th className="px-5 py-3 font-medium">Local</th>
                   <th className="px-5 py-3 font-medium">Pedidos</th>
                   <th className="px-5 py-3 font-medium">Total gasto</th>
+                  <th className="px-5 py-3 font-medium">Última compra</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-muted/40">
+                {customers.map((c) => (
+                  <tr key={`${c.channel}-${c.name}`} className="hover:bg-muted/40">
                     <td className="px-5 py-3 font-medium">{c.name}</td>
-                    <td className="px-5 py-3 text-muted-foreground">
-                      <div>{c.email ?? "—"}</div>
-                      <div className="text-xs">{c.phone ?? ""}</div>
-                    </td>
                     <td className="px-5 py-3">
-                      <Chip label={chan(c.channel).label} token={chan(c.channel).token} />
+                      <Chip label={tiopsChan(c.channel).label} token={tiopsChan(c.channel).token} />
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">
-                      {c.city ? `${c.city}/${c.state ?? ""}` : "—"}
-                    </td>
-                    <td className="px-5 py-3 text-muted-foreground">{c.orders_count}</td>
-                    <td className="px-5 py-3 font-medium">{money(Number(c.total_spent))}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{c.orders}</td>
+                    <td className="px-5 py-3 font-medium">{money(c.total)}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{dateTime(c.last)}</td>
                   </tr>
                 ))}
               </tbody>
