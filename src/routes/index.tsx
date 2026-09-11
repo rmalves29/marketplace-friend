@@ -191,7 +191,11 @@ function Dashboard() {
                   />
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {c.error ? `Indisponível: ${c.error}` : `${c.orders} pedidos · até ${c.to}`}
+                  {c.error
+                    ? `Indisponível: ${c.error}`
+                    : c.orders === 0
+                      ? `Nenhuma venda no período · até ${c.to}`
+                      : `${c.orders} pedidos · até ${c.to}`}
                 </p>
               </div>
             ))}
