@@ -41,15 +41,31 @@ function chunk<T>(arr: T[], size: number): T[][] {
 
 /* ---------------------------------- Mercado Livre --------------------------------- */
 
+/** A conta "atual" do Tiops pode apontar para uma loja antiga; usamos a conta meli conectada. */
+async function meliUserId(): Promise<string | null> {
+  try {
+    const res = await tiopsTool<any>("list_accounts");
+    const acc = (res?.data?.accounts ?? []).find(
+      (a: any) => a?.marketplace === "meli" && a?.connected,
+    );
+    const id = acc?.param_to_use?.meliUserId ?? acc?.external_id;
+    return id ? String(id) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchMeli(from: string, to: string): Promise<NormalizedOrder[]> {
   const orders: NormalizedOrder[] = [];
   const limit = 50;
+  const userId = await meliUserId();
   for (let offset = 0; offset < 500; offset += limit) {
     const res = await tiopsTool<any>("list_orders", {
       date_from: `${from}T00:00:00.000${BRT}`,
       date_to: `${to}T23:59:59.000${BRT}`,
       limit,
       offset,
+      ...(userId ? { meliUserId: userId } : {}),
     });
     const results: any[] = res?.data?.results ?? [];
     for (const o of results) {
