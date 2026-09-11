@@ -27,6 +27,15 @@ export const Route = createFileRoute("/anuncios")({
   component: Anuncios,
 });
 
+const STATUS_PT: Record<string, string> = {
+  ONGOING: "Ativa",
+  EXPIRED: "Encerrada",
+  NOT_START: "Agendada",
+  DELETED: "Excluída",
+  PAUSED: "Pausada",
+  ACTIVE: "Ativa",
+};
+
 function Anuncios() {
   const load = useServerFn(tiopsAds);
   const { data, isFetching } = useQuery({
@@ -80,7 +89,7 @@ function Anuncios() {
                     <td className="px-5 py-3">
                       <Chip label={tiopsChan(c.channel).label} token={tiopsChan(c.channel).token} />
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">{c.status || "—"}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{STATUS_PT[c.status?.toUpperCase() ?? ""] ?? (c.status || "—")}</td>
                     <td className="px-5 py-3">{c.spend == null ? "—" : money(c.spend)}</td>
                     <td className="px-5 py-3 text-success">
                       {c.revenue == null ? "—" : money(c.revenue)}
