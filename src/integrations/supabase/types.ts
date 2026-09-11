@@ -14,7 +14,256 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ad_campaigns: {
+        Row: {
+          channel: string
+          clicks: number
+          conversions: number
+          created_at: string
+          id: string
+          name: string
+          revenue: number
+          spend: number
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          clicks?: number
+          conversions?: number
+          created_at?: string
+          id?: string
+          name: string
+          revenue?: number
+          spend?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          clicks?: number
+          conversions?: number
+          created_at?: string
+          id?: string
+          name?: string
+          revenue?: number
+          spend?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          channel: string
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          orders_count: number
+          phone: string | null
+          state: string | null
+          total_spent: number
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          orders_count?: number
+          phone?: string | null
+          state?: string | null
+          total_spent?: number
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          orders_count?: number
+          phone?: string | null
+          state?: string | null
+          total_spent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integrations: {
+        Row: {
+          channel: string
+          connected: boolean
+          created_at: string
+          id: string
+          label: string
+          last_sync_at: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          connected?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          last_sync_at?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          connected?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          last_sync_at?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          answered: boolean
+          body: string
+          channel: string
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          received_at: string
+          subject: string | null
+        }
+        Insert: {
+          answered?: boolean
+          body: string
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          received_at?: string
+          subject?: string | null
+        }
+        Update: {
+          answered?: boolean
+          body?: string
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          received_at?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          channel: string
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          items_count: number
+          order_number: string
+          placed_at: string
+          shipping_cost: number
+          status: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          items_count?: number
+          order_number: string
+          placed_at?: string
+          shipping_cost?: number
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          items_count?: number
+          order_number?: string
+          placed_at?: string
+          shipping_cost?: number
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          price: number
+          sku: string
+          status: string
+          stock: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          id?: string
+          price?: number
+          sku: string
+          status?: string
+          stock?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          price?: number
+          sku?: string
+          status?: string
+          stock?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
