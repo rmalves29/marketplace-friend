@@ -113,7 +113,8 @@ async function fetchShopee(from: string, to: string): Promise<NormalizedOrder[]>
         id: String(o.order_sn),
         date: new Date(num(o.create_time) * 1000).toISOString(),
         status,
-        cancelled: status === "CANCELLED" || status === "UNPAID",
+        // Só cancelado sai da conta; pedido aguardando pagamento continua sendo venda do dia.
+        cancelled: status === "CANCELLED",
         total: num(o.total_amount),
         customer: o.buyer_username ? String(o.buyer_username) : null,
         items: (o.item_list ?? []).map((it: any) => ({
