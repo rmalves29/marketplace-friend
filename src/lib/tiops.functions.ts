@@ -156,3 +156,78 @@ export const tiopsDashboard = createServerFn({ method: "POST" })
         })),
     };
   });
+
+const CHANNEL_IDS: ChannelId[] = ["meli", "shopee", "tiktok_shop", "shein"];
+
+function todayIsoBrt() {
+  return new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10);
+}
+
+export const tiopsOrders = createServerFn({ method: "POST" })
+  .inputValidator((input: { from: string; to: string }) => {
+    if (!RANGE.test(input.from) || !RANGE.test(input.to)) throw new Error("Datas inválidas");
+    if (input.from > input.to) throw new Error("Início posterior ao fim");
+    return input;
+  })
+  .handler(async ({ data }): Promise<OrdersPayload> => {
+    const { fetchChannelOrders } = await import("./tiops-orders.server");
+    const results = await Promise.all(
+      CHANNEL_IDS.map((c) => fetchChannelOrders(c, data.from, data.to, todayIsoBrt())),
+    );
+    return {
+      from: data.from,
+      to: data.to,
+      channels: results.map((r) => ({ channel: r.channel, to: r.to, error: r.error })),
+      orders: results
+        .flatMap((r) => r.orders)
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .map((o) => ({
+          channel: o.channel,
+          id: o.id,
+          date: o.date,
+          status: o.status,
+          cancelled: o.cancelled,
+          total: o.total,
+          customer: o.customer,
+          itemsCount: o.items.reduce((s, i) => s + i.qty, 0),
+          itemNames: o.items.map((i) => i.name),
+        })),
+    };
+  });
+
+export const tiopsProducts = createServerFn({ method: "GET" }).handler(async () => {
+  const { fetchChannelProducts } = await import("./tiops-catalog.server");
+  const results = await Promise.all(CHANNEL_IDS.map((c) => fetchChannelProducts(c)));
+  return {
+    channels: results.map((r) => ({
+      channel: r.channel,
+      error: r.error,
+      count: r.products.length,
+    })),
+    products: results.flatMap((r) => r.products),
+  };
+});
+
+export const tiopsMessages = createServerFn({ method: "GET" }).handler(async () => {
+  const { fetchChannelMessages } = await import("./tiops-catalog.server");
+  const results = await Promise.all(
+    (["meli", "tiktok_shop"] as const).map((c) => fetchChannelMessages(c)),
+  );
+  return {
+    channels: results.map((r) => ({ channel: r.channel, error: r.error })),
+    messages: results
+      .flatMap((r) => r.messages)
+      .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "")),
+  };
+});
+
+export const tiopsAds = createServerFn({ method: "GET" }).handler(async () => {
+  const { fetchChannelAds } = await import("./tiops-catalog.server");
+  const results = await Promise.all(
+    (["meli", "shopee", "tiktok_shop"] as const).map((c) => fetchChannelAds(c)),
+  );
+  return {
+    channels: results.map((r) => ({ channel: r.channel, error: r.error })),
+    campaigns: results.flatMap((r) => r.campaigns),
+  };
+});
