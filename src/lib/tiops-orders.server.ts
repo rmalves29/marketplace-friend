@@ -190,8 +190,9 @@ async function fetchShein(from: string, to: string): Promise<NormalizedOrder[]> 
       orders.push({
         channel: "shein",
         id: no,
+        // A Shein devolve a data de criação no fuso da China (UTC+8), mesmo filtrando em BRT.
         date: new Date(
-          `${(meta?.orderCreateTime ?? "").replace(" ", "T") || `${from}T00:00:00`}${BRT}`,
+          `${(meta?.orderCreateTime ?? "").replace(" ", "T") || `${from}T11:00:00`}+08:00`,
         ).toISOString(),
         status,
         cancelled: status === "6",
@@ -213,11 +214,10 @@ const FETCHERS: Record<ChannelId, (from: string, to: string) => Promise<Normaliz
   shein: fetchShein,
 };
 
-/** Limite de dados confiáveis: D-1 para ML/Shopee/TikTok, D-2 para Shein. */
-export function channelMaxDay(channel: ChannelId, todayIso: string): string {
-  const back = channel === "shein" ? 2 : 1;
+/** Limite de dados confiáveis: D-1 em todos os canais (o dia corrente nunca entra). */
+export function channelMaxDay(_channel: ChannelId, todayIso: string): string {
   const d = new Date(`${todayIso}T12:00:00Z`);
-  return new Date(d.getTime() - back * 86_400_000).toISOString().slice(0, 10);
+  return new Date(d.getTime() - 86_400_000).toISOString().slice(0, 10);
 }
 
 export async function fetchChannelOrders(
@@ -236,7 +236,7 @@ export async function fetchChannelOrders(
   } catch (e) {
     return {
       channel,
-      from,
+      from: cappedFrom,
       to: cappedTo,
       orders: [],
       error: e instanceof Error ? e.message : "Falha ao consultar o canal",

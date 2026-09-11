@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { Chip } from "@/components/crm/Chip";
-import { chan, dateTime } from "@/lib/crm";
+import { dateTime, tiopsChan } from "@/lib/crm";
+import { tiopsMessages } from "@/lib/tiops.functions";
 
 export const Route = createFileRoute("/mensagens")({
   head: () => ({
@@ -11,12 +12,13 @@ export const Route = createFileRoute("/mensagens")({
       { title: "Mensagens | Tiops CRM" },
       {
         name: "description",
-        content: "Central de atendimento com as perguntas dos compradores de todos os canais.",
+        content:
+          "Perguntas e mensagens reais de compradores do Mercado Livre e do TikTok Shop, com o que ainda não foi respondido.",
       },
       { property: "og:title", content: "Mensagens | Tiops CRM" },
       {
         property: "og:description",
-        content: "Responda dúvidas de compradores da Shopee, Shein, TikTok e Mercado Pago em um só lugar.",
+        content: "Acompanhe o atendimento aos compradores dos seus canais em um só lugar.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -26,62 +28,71 @@ export const Route = createFileRoute("/mensagens")({
 });
 
 function Mensagens() {
-  const qc = useQueryClient();
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["messages"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("messages")
-        .select("*")
-        .order("received_at", { ascending: false });
-      return data ?? [];
-    },
+  const load = useServerFn(tiopsMessages);
+  const { data, isFetching } = useQuery({
+    queryKey: ["tiops-messages"],
+    queryFn: () => load(),
+    staleTime: 2 * 60 * 1000,
   });
 
-  const toggle = useMutation({
-    mutationFn: async ({ id, answered }: { id: string; answered: boolean }) => {
-      await supabase.from("messages").update({ answered }).eq("id", id);
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["messages"] }),
-  });
+  const messages = data?.messages ?? [];
+  const pending = messages.filter((m) => !m.answered).length;
+  const errors = (data?.channels ?? []).filter((c) => c.error);
 
   return (
-    <AppShell title="Mensagens" subtitle="Perguntas e atendimentos dos compradores">
-      {isLoading ? (
-        <Panel>
-          <EmptyState message="Carregando mensagens…" />
-        </Panel>
-      ) : data.length === 0 ? (
-        <Panel>
-          <EmptyState message="Nenhuma mensagem por aqui." />
-        </Panel>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {data.map((m) => (
-            <Panel key={m.id} className="p-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <Chip label={chan(m.channel).label} token={chan(m.channel).token} />
-                <span className="text-sm font-medium">{m.customer_name}</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {dateTime(m.received_at)}
-                </span>
-              </div>
-              <p className="mt-3 text-sm font-medium">{m.subject}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{m.body}</p>
-              <button
-                onClick={() => toggle.mutate({ id: m.id, answered: !m.answered })}
-                className={`mt-4 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  m.answered
-                    ? "bg-success/15 text-success"
-                    : "bg-primary text-primary-foreground hover:opacity-90"
-                }`}
-              >
-                {m.answered ? "Respondida" : "Marcar como respondida"}
-              </button>
-            </Panel>
+    <AppShell
+      title="Mensagens"
+      subtitle={
+        isFetching && !data
+          ? "Buscando conversas…"
+          : `${messages.length} conversas · ${pending} sem resposta`
+      }
+    >
+      <p className="mb-4 text-xs text-muted-foreground">
+        Shopee e Shein não liberam o chat do comprador pela API, então só aparecem aqui Mercado
+        Livre e TikTok Shop.
+      </p>
+
+      {errors.length > 0 ? (
+        <Panel className="mb-4 space-y-1 p-4 text-xs text-muted-foreground">
+          {errors.map((c) => (
+            <p key={c.channel}>
+              <span className="font-medium text-foreground">{tiopsChan(c.channel).label}:</span>{" "}
+              {c.error}
+            </p>
           ))}
-        </div>
-      )}
+        </Panel>
+      ) : null}
+
+      <Panel>
+        {isFetching && !data ? (
+          <EmptyState message="Carregando mensagens…" />
+        ) : messages.length === 0 ? (
+          <EmptyState message="Nenhuma pergunta ou mensagem pendente agora." />
+        ) : (
+          <div className="divide-y divide-border">
+            {messages.map((m) => (
+              <div key={`${m.channel}-${m.id}`} className="px-5 py-4">
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <Chip label={tiopsChan(m.channel).label} token={tiopsChan(m.channel).token} />
+                  <span className="font-medium">{m.from ?? "Comprador"}</span>
+                  <span className="text-xs text-muted-foreground">{m.kind}</span>
+                  <Chip
+                    label={m.answered ? "Respondida" : "Sem resposta"}
+                    token={
+                      m.answered ? "bg-success/15 text-success" : "bg-warning/15 text-warning"
+                    }
+                  />
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {dateTime(m.date)}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{m.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
     </AppShell>
   );
 }

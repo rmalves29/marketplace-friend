@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { Chip } from "@/components/crm/Chip";
-import { CHANNELS, chan, ordStatus, money, dateTime } from "@/lib/crm";
+import { usePeriod } from "@/components/crm/PeriodFilter";
+import { money, dateTime, tiopsChan, TIOPS_CHANNELS } from "@/lib/crm";
+import { formatRange } from "@/lib/period";
+import { tiopsOrders } from "@/lib/tiops.functions";
 
 export const Route = createFileRoute("/pedidos")({
   head: () => ({
@@ -12,12 +15,13 @@ export const Route = createFileRoute("/pedidos")({
       { title: "Pedidos | Tiops CRM" },
       {
         name: "description",
-        content: "Todos os pedidos de Shopee, Shein, TikTok Shop e Mercado Pago em uma lista única.",
+        content:
+          "Pedidos reais de Mercado Livre, Shopee, TikTok Shop e Shein em uma lista única, filtrada por período.",
       },
       { property: "og:title", content: "Pedidos | Tiops CRM" },
       {
         property: "og:description",
-        content: "Acompanhe status, valores e clientes de cada pedido dos seus marketplaces.",
+        content: "Status, valores, itens e clientes de cada pedido dos seus marketplaces.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,47 +31,57 @@ export const Route = createFileRoute("/pedidos")({
 });
 
 function Pedidos() {
+  const { range, control } = usePeriod("day");
   const [channel, setChannel] = useState<string>("all");
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["orders"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("*")
-        .order("placed_at", { ascending: false });
-      return data ?? [];
-    },
+  const load = useServerFn(tiopsOrders);
+
+  const { data, isFetching } = useQuery({
+    queryKey: ["tiops-orders", range.from, range.to],
+    queryFn: () => load({ data: { from: range.from, to: range.to } }),
+    staleTime: 5 * 60 * 1000,
   });
 
-  const filtered = channel === "all" ? data : data.filter((o) => o.channel === channel);
+  const all = data?.orders ?? [];
+  const filtered = channel === "all" ? all : all.filter((o) => o.channel === channel);
+  const errors = (data?.channels ?? []).filter((c) => c.error);
 
   return (
     <AppShell
       title="Pedidos"
-      subtitle="Pedidos sincronizados de todos os canais"
-      actions={
-        <div className="flex flex-wrap gap-2">
-          {["all", ...Object.keys(CHANNELS)].map((key) => (
-            <button
-              key={key}
-              onClick={() => setChannel(key)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                channel === key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {key === "all" ? "Todos" : chan(key).label}
-            </button>
-          ))}
-        </div>
-      }
+      subtitle={`Pedidos reais do Tiops · ${formatRange(range.from, range.to)}`}
+      actions={control}
     >
+      <div className="mb-4 flex flex-wrap gap-2">
+        {["all", ...Object.keys(TIOPS_CHANNELS)].map((key) => (
+          <button
+            key={key}
+            onClick={() => setChannel(key)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              channel === key
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {key === "all" ? `Todos (${all.length})` : tiopsChan(key).label}
+          </button>
+        ))}
+      </div>
+
+      {errors.length > 0 ? (
+        <Panel className="mb-4 p-4 text-xs text-muted-foreground">
+          {errors.map((c) => (
+            <p key={c.channel}>
+              {tiopsChan(c.channel).label}: {c.error}
+            </p>
+          ))}
+        </Panel>
+      ) : null}
+
       <Panel>
-        {isLoading ? (
+        {isFetching && !data ? (
           <EmptyState message="Carregando pedidos…" />
         ) : filtered.length === 0 ? (
-          <EmptyState message="Nenhum pedido neste canal." />
+          <EmptyState message="Nenhum pedido neste período." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -76,7 +90,7 @@ function Pedidos() {
                   <th className="px-5 py-3 font-medium">Pedido</th>
                   <th className="px-5 py-3 font-medium">Canal</th>
                   <th className="px-5 py-3 font-medium">Cliente</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Produtos</th>
                   <th className="px-5 py-3 font-medium">Itens</th>
                   <th className="px-5 py-3 font-medium">Total</th>
                   <th className="px-5 py-3 font-medium">Data</th>
@@ -84,18 +98,26 @@ function Pedidos() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((o) => (
-                  <tr key={o.id} className="hover:bg-muted/40">
-                    <td className="px-5 py-3 font-medium">{o.order_number}</td>
+                  <tr key={`${o.channel}-${o.id}`} className="hover:bg-muted/40">
+                    <td className="px-5 py-3 font-medium">{o.id}</td>
                     <td className="px-5 py-3">
-                      <Chip label={chan(o.channel).label} token={chan(o.channel).token} />
+                      <Chip label={tiopsChan(o.channel).label} token={tiopsChan(o.channel).token} />
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">{o.customer_name}</td>
-                    <td className="px-5 py-3">
-                      <Chip label={ordStatus(o.status).label} token={ordStatus(o.status).token} />
+                    <td className="px-5 py-3 text-muted-foreground">{o.customer ?? "—"}</td>
+                    <td className="max-w-[22rem] truncate px-5 py-3 text-muted-foreground">
+                      {o.itemNames.join(", ") || "—"}
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">{o.items_count}</td>
-                    <td className="px-5 py-3 font-medium">{money(Number(o.total))}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{dateTime(o.placed_at)}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{o.itemsCount}</td>
+                    <td className="px-5 py-3 font-medium">
+                      {o.cancelled ? (
+                        <span className="text-muted-foreground line-through">
+                          {money(o.total)}
+                        </span>
+                      ) : (
+                        money(o.total)
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">{dateTime(o.date)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -105,8 +105,8 @@ function Dashboard() {
       }
     >
       <p className="mb-4 text-xs text-muted-foreground">
-        Mercado Livre, Shopee e TikTok Shop mostram dados até ontem; a Shein, até anteontem
-        (limitação da API dela). O dia corrente nunca entra, para não contar venda pela metade.
+        Todos os canais mostram dados até ontem. O dia corrente nunca entra, para não contar venda
+        pela metade.
       </p>
 
       {error ? (
