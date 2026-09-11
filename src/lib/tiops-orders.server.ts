@@ -235,7 +235,7 @@ export async function fetchChannelOrders(
   } catch (e) {
     return {
       channel,
-      from,
+      from: cappedFrom,
       to: cappedTo,
       orders: [],
       error: e instanceof Error ? e.message : "Falha ao consultar o canal",
