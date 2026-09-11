@@ -25,7 +25,25 @@ export type DashboardPayload = {
   }>;
 };
 
+export type OrdersPayload = {
+  from: string;
+  to: string;
+  channels: Array<{ channel: ChannelId; to: string; error: string | null }>;
+  orders: Array<{
+    channel: ChannelId;
+    id: string;
+    date: string;
+    status: string;
+    cancelled: boolean;
+    total: number;
+    customer: string | null;
+    itemsCount: number;
+    itemNames: string[];
+  }>;
+};
+
 const RANGE = /^\d{4}-\d{2}-\d{2}$/;
+
 
 export const tiopsHealth = createServerFn({ method: "GET" }).handler(async () => {
   const { tiopsPing } = await import("./tiops.server");
