@@ -196,7 +196,13 @@ async function fetchShein(from: string, to: string): Promise<NormalizedOrder[]> 
         ).toISOString(),
         status,
         cancelled: status === "6",
-        total: items.reduce((s: number, i: any) => s + i.price * i.qty, 0),
+        // Valor de venda: preço dos produtos menos descontos de loja/promoção.
+        total:
+          num(o.productTotalPrice) > 0
+            ? num(o.productTotalPrice) -
+              num(o.promotionDiscountTotalPrice) -
+              num(o.storeDiscountTotalPrice)
+            : items.reduce((s: number, i: any) => s + i.price * i.qty, 0),
         customer: null,
         items,
       });
