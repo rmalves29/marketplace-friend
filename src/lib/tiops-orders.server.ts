@@ -59,23 +59,37 @@ async function fetchMeli(from: string, to: string): Promise<NormalizedOrder[]> {
   const orders: NormalizedOrder[] = [];
   const limit = 50;
   const userId = await meliUserId();
+  const paidFrom = startUnix(from);
+  const paidTo = endUnix(to);
+  // A conta do ML devolve datas em GMT-4; buscamos uma margem e filtramos pelo
+  // pagamento em horário de Brasília, como faz o painel do vendedor.
+  const marginFrom = new Date((paidFrom - 2 * 86_400) * 1000).toISOString().slice(0, 10);
+  const marginTo = new Date((paidTo + 2 * 86_400) * 1000).toISOString().slice(0, 10);
+
   for (let offset = 0; offset < 500; offset += limit) {
     const res = await tiopsTool<any>("list_orders", {
-      date_from: `${from}T00:00:00.000${BRT}`,
-      date_to: `${to}T23:59:59.000${BRT}`,
+      date_from: `${marginFrom}T00:00:00.000${BRT}`,
+      date_to: `${marginTo}T23:59:59.000${BRT}`,
       limit,
       offset,
       ...(userId ? { meliUserId: userId } : {}),
     });
     const results: any[] = res?.data?.results ?? [];
     for (const o of results) {
+      const payments: any[] = o.payments ?? [];
+      const paid = payments.find((p) => num(p?.total_paid_amount) > 0 && p?.date_approved);
+      // Pedidos sem pagamento aprovado nunca entram na venda do dia.
+      if (!paid) continue;
+      const paidAt = Math.floor(new Date(paid.date_approved).getTime() / 1000);
+      if (paidAt < paidFrom || paidAt > paidTo) continue;
       const status = String(o.status ?? "");
       orders.push({
         channel: "meli",
         id: String(o.id),
-        date: new Date(o.date_created).toISOString(),
+        date: new Date(paidAt * 1000).toISOString(),
         status,
-        cancelled: status === "cancelled",
+        // Cancelamentos posteriores não alteram a venda já registrada no dia.
+        cancelled: false,
         total: num(o.total_amount),
         customer: o?.buyer?.nickname ?? null,
         items: (o.order_items ?? []).map((it: any) => ({
@@ -89,6 +103,7 @@ async function fetchMeli(from: string, to: string): Promise<NormalizedOrder[]> {
   }
   return orders;
 }
+
 
 /* -------------------------------------- Shopee ------------------------------------- */
 
