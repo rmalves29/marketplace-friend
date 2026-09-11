@@ -78,8 +78,12 @@ async function fetchMeli(from: string, to: string): Promise<NormalizedOrder[]> {
 
 async function fetchShopee(from: string, to: string): Promise<NormalizedOrder[]> {
   const snList: string[] = [];
+  const paidFrom = startUnix(from);
+  const paidTo = endUnix(to);
   // A Shopee aceita no máximo 15 dias por chamada.
-  const startAll = startUnix(from);
+  // O painel do vendedor agrupa pela data do pagamento. Como a API só filtra
+  // a listagem pela criação, buscamos uma margem para capturar pagamentos posteriores.
+  const startAll = paidFrom - 3 * 86_400;
   const endAll = endUnix(to);
   const WINDOW = 15 * 86_400;
 
@@ -107,21 +111,27 @@ async function fetchShopee(from: string, to: string): Promise<NormalizedOrder[]>
   for (const batch of chunk(snList, 40)) {
     const res = await tiopsTool<any>("shopee_get_order_detail", { order_sn: batch.join(",") });
     for (const o of res?.data?.response?.order_list ?? []) {
+      const paidAt = num(o.pay_time);
+      if (paidAt < paidFrom || paidAt > paidTo) continue;
       const status = String(o.order_status ?? "");
+      const items = (o.item_list ?? []).map((it: any) => ({
+        name: it?.item_name ?? "Item",
+        qty: num(it?.model_quantity_purchased) || 1,
+        price: num(it?.model_discounted_price),
+      }));
       orders.push({
         channel: "shopee",
         id: String(o.order_sn),
-        date: new Date(num(o.create_time) * 1000).toISOString(),
+        date: new Date(paidAt * 1000).toISOString(),
         status,
-        // Só cancelado sai da conta; pedido aguardando pagamento continua sendo venda do dia.
-        cancelled: status === "CANCELLED",
-        total: num(o.total_amount),
+        // O painel mantém na venda do dia pedidos pagos que foram cancelados depois.
+        cancelled: false,
+        // O painel de vendas soma os produtos no preço efetivamente pago.
+        total: items.reduce((sum: number, item: { qty: number; price: number }) => {
+          return sum + item.qty * item.price;
+        }, 0),
         customer: o.buyer_username ? String(o.buyer_username) : null,
-        items: (o.item_list ?? []).map((it: any) => ({
-          name: it?.item_name ?? "Item",
-          qty: num(it?.model_quantity_purchased) || 1,
-          price: num(it?.model_discounted_price),
-        })),
+        items,
       });
     }
   }
@@ -132,23 +142,29 @@ async function fetchShopee(from: string, to: string): Promise<NormalizedOrder[]>
 
 async function fetchTiktok(from: string, to: string): Promise<NormalizedOrder[]> {
   const orders: NormalizedOrder[] = [];
+  const paidFrom = startUnix(from);
+  const paidTo = endUnix(to);
   let token = "";
   for (let page = 0; page < 30; page++) {
     const res = await tiopsTool<any>("tiktok_search_orders", {
-      create_time_ge: startUnix(from),
+      // O endpoint só filtra por criação, embora o painel consolide por pagamento.
+      create_time_ge: paidFrom - 3 * 86_400,
       create_time_lt: endUnix(to) + 1,
       page_size: 50,
       ...(token ? { page_token: token } : {}),
     });
     const data = res?.data ?? res;
     for (const o of data?.orders ?? []) {
+      const paidAt = num(o.paid_time ?? o?.payment?.paid_time);
+      if (paidAt < paidFrom || paidAt > paidTo) continue;
       const status = String(o.status ?? "");
       orders.push({
         channel: "tiktok_shop",
         id: String(o.id),
-        date: new Date(num(o.create_time) * 1000).toISOString(),
+        date: new Date(paidAt * 1000).toISOString(),
         status,
-        cancelled: status === "CANCELLED",
+        // Cancelamentos posteriores não alteram retroativamente o painel do dia pago.
+        cancelled: false,
         total: num(o?.payment?.total_amount),
         customer: o?.recipient_address?.name ?? o?.cpf_name ?? null,
         items: (o.line_items ?? []).map((it: any) => ({
