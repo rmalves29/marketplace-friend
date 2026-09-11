@@ -228,12 +228,11 @@ export async function fetchChannelOrders(
 ): Promise<ChannelResult> {
   const maxDay = channelMaxDay(channel, todayIso);
   const cappedTo = to > maxDay ? maxDay : to;
-  if (from > cappedTo) {
-    return { channel, from, to: cappedTo, orders: [], error: null };
-  }
+  // Período inteiro além do limite do canal (ex.: "Dia" na Shein): desloca para o último dia válido.
+  const cappedFrom = from > cappedTo ? cappedTo : from;
   try {
-    const orders = await FETCHERS[channel](from, cappedTo);
-    return { channel, from, to: cappedTo, orders, error: null };
+    const orders = await FETCHERS[channel](cappedFrom, cappedTo);
+    return { channel, from: cappedFrom, to: cappedTo, orders, error: null };
   } catch (e) {
     return {
       channel,
