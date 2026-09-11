@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { Chip } from "@/components/crm/Chip";
-import { CHANNELS, money } from "@/lib/crm";
+import { chan, money } from "@/lib/crm";
 
 export const Route = createFileRoute("/clientes")({
   head: () => ({

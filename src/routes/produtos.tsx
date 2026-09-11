@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { Chip } from "@/components/crm/Chip";
-import { CHANNELS, PRODUCT_STATUS, money } from "@/lib/crm";
+import { chan, prodStatus, money } from "@/lib/crm";
 
 export const Route = createFileRoute("/produtos")({
   head: () => ({
@@ -60,7 +60,7 @@ function Produtos() {
                     <td className="px-5 py-3 text-muted-foreground">{p.sku}</td>
                     <td className="px-5 py-3 font-medium">{p.title}</td>
                     <td className="px-5 py-3">
-                      <Chip label={CHANNELS[p.channel]?.label ?? p.channel} token={CHANNELS[p.channel]?.token} />
+                      <Chip label={chan(p.channel).label} token={chan(p.channel).token} />
                     </td>
                     <td className="px-5 py-3">{money(Number(p.price))}</td>
                     <td className={`px-5 py-3 ${p.stock === 0 ? "text-destructive" : "text-muted-foreground"}`}>
@@ -68,8 +68,8 @@ function Produtos() {
                     </td>
                     <td className="px-5 py-3">
                       <Chip
-                        label={PRODUCT_STATUS[p.status]?.label ?? p.status}
-                        token={PRODUCT_STATUS[p.status]?.token}
+                        label={prodStatus(p.status).label}
+                        token={prodStatus(p.status).token}
                       />
                     </td>
                   </tr>

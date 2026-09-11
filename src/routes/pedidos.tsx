@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { Chip } from "@/components/crm/Chip";
-import { CHANNELS, ORDER_STATUS, money, dateTime } from "@/lib/crm";
+import { CHANNELS, chan, ordStatus, money, dateTime } from "@/lib/crm";
 
 export const Route = createFileRoute("/pedidos")({
   head: () => ({
@@ -57,7 +57,7 @@ function Pedidos() {
                   : "border-border text-muted-foreground hover:text-foreground"
               }`}
             >
-              {key === "all" ? "Todos" : CHANNELS[key].label}
+              {key === "all" ? "Todos" : chan(key).label}
             </button>
           ))}
         </div>

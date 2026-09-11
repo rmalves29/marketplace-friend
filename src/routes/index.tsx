@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { StatCard } from "@/components/crm/StatCard";
 import { Chip } from "@/components/crm/Chip";
-import { CHANNELS, ORDER_STATUS, money, dateTime } from "@/lib/crm";
+import { CHANNELS, chan, ordStatus, money, dateTime } from "@/lib/crm";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,7 +61,7 @@ function Dashboard() {
     const list = orders.filter((o) => o.channel === key && o.status !== "cancelled");
     return {
       key,
-      label: CHANNELS[key].label,
+      label: chan(key).label,
       total: list.reduce((s, o) => s + Number(o.total), 0),
       count: list.length,
     };
