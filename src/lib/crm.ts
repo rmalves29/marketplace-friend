@@ -38,3 +38,15 @@ export function shortDate(value: string | null | undefined) {
   if (!value) return "—";
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(value));
 }
+
+export function chan(key: string) {
+  return CHANNELS[key] ?? { label: key, token: "bg-muted text-muted-foreground" };
+}
+
+export function ordStatus(key: string) {
+  return ORDER_STATUS[key] ?? { label: key, token: "bg-muted text-muted-foreground" };
+}
+
+export function prodStatus(key: string) {
+  return PRODUCT_STATUS[key] ?? { label: key, token: "bg-muted text-muted-foreground" };
+}

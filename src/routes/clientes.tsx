@@ -83,7 +83,7 @@ function Clientes() {
                       <div className="text-xs">{c.phone ?? ""}</div>
                     </td>
                     <td className="px-5 py-3">
-                      <Chip label={CHANNELS[c.channel]?.label ?? c.channel} token={CHANNELS[c.channel]?.token} />
+                      <Chip label={chan(c.channel).label} token={chan(c.channel).token} />
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">
                       {c.city ? `${c.city}/${c.state ?? ""}` : "—"}

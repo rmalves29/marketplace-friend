@@ -87,11 +87,11 @@ function Pedidos() {
                   <tr key={o.id} className="hover:bg-muted/40">
                     <td className="px-5 py-3 font-medium">{o.order_number}</td>
                     <td className="px-5 py-3">
-                      <Chip label={CHANNELS[o.channel]?.label ?? o.channel} token={CHANNELS[o.channel]?.token} />
+                      <Chip label={chan(o.channel).label} token={chan(o.channel).token} />
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">{o.customer_name}</td>
                     <td className="px-5 py-3">
-                      <Chip label={ORDER_STATUS[o.status]?.label ?? o.status} token={ORDER_STATUS[o.status]?.token} />
+                      <Chip label={ordStatus(o.status).label} token={ordStatus(o.status).token} />
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">{o.items_count}</td>
                     <td className="px-5 py-3 font-medium">{money(Number(o.total))}</td>

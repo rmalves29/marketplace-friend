@@ -91,10 +91,10 @@ function Dashboard() {
               {orders.slice(0, 6).map((o) => (
                 <div key={o.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
                   <span className="font-medium">{o.order_number}</span>
-                  <Chip label={CHANNELS[o.channel]?.label ?? o.channel} token={CHANNELS[o.channel]?.token} />
+                  <Chip label={chan(o.channel).label} token={chan(o.channel).token} />
                   <span className="text-muted-foreground">{o.customer_name}</span>
                   <span className="ml-auto font-medium">{money(Number(o.total))}</span>
-                  <Chip label={ORDER_STATUS[o.status]?.label ?? o.status} token={ORDER_STATUS[o.status]?.token} />
+                  <Chip label={ordStatus(o.status).label} token={ordStatus(o.status).token} />
                   <span className="w-full text-xs text-muted-foreground sm:w-auto">{dateTime(o.placed_at)}</span>
                 </div>
               ))}

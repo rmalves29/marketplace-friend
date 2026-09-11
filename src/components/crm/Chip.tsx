@@ -6,8 +6,9 @@ export function Chip({
   className,
 }: {
   label: string;
-  token?: string;
-  className?: string;
+  token?: string | undefined;
+  
+  className?: string | undefined;
 }) {
   return (
     <span
