@@ -167,8 +167,8 @@ async function fetchTiktok(from: string, to: string): Promise<NormalizedOrder[]>
 
 async function fetchShein(from: string, to: string): Promise<NormalizedOrder[]> {
   const list = await tiopsTool<any>("shein_order_list_range", {
-    data_inicio: from,
-    data_fim: to,
+    data_inicio: `${from} 00:00:00`,
+    data_fim: `${to} 23:59:59`,
     query_type: 1,
   });
   const rows: any[] = list?.data?.pedidos ?? [];
