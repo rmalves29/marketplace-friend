@@ -125,7 +125,13 @@ function Produtos() {
                         />
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">{p.sku ?? p.id}</td>
-                      <td className="px-5 py-3 font-medium">{money(p.price)}</td>
+                      <td className="px-5 py-3 font-medium">
+                        {p.price == null ? (
+                          <span className="text-xs text-muted-foreground">Por variação</span>
+                        ) : (
+                          money(p.price)
+                        )}
+                      </td>
                       <td className="px-5 py-3 text-muted-foreground">{p.stock ?? "—"}</td>
                       <td className="px-5 py-3">
                         <Chip label={label} token={statusToken(label)} />
