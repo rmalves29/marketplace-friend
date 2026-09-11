@@ -7,6 +7,18 @@ export const CHANNELS: Record<string, { label: string; token: string }> = {
   mercadopago: { label: "Mercado Pago", token: "bg-chart-4/15 text-chart-4" },
 };
 
+/** Canais conectados no Tiops Marketplace Connect. */
+export const TIOPS_CHANNELS: Record<string, { label: string; token: string }> = {
+  meli: { label: "Mercado Livre", token: "bg-chart-4/15 text-chart-4" },
+  shopee: { label: "Shopee", token: "bg-primary/15 text-primary" },
+  tiktok_shop: { label: "TikTok Shop", token: "bg-accent/15 text-accent" },
+  shein: { label: "Shein", token: "bg-chart-5/15 text-chart-5" },
+};
+
+export function tiopsChan(key: string) {
+  return TIOPS_CHANNELS[key] ?? { label: key, token: "bg-muted text-muted-foreground" };
+}
+
 export const ORDER_STATUS: Record<string, { label: string; token: string }> = {
   pending: { label: "Aguardando", token: "bg-warning/15 text-warning" },
   processing: { label: "Em separação", token: "bg-accent/15 text-accent" },
