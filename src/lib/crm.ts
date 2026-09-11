@@ -39,16 +39,22 @@ export function money(value: number | null | undefined) {
   );
 }
 
+const TZ = "America/Sao_Paulo";
+
 export function dateTime(value: string | null | undefined) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
-    new Date(value),
-  );
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: TZ,
+  }).format(new Date(value));
 }
 
 export function shortDate(value: string | null | undefined) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: TZ }).format(
+    new Date(value),
+  );
 }
 
 export function chan(key: string) {
