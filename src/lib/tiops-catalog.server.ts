@@ -6,7 +6,7 @@ export type CatalogProduct = {
   id: string;
   title: string;
   sku: string | null;
-  price: number;
+  price: number | null;
   stock: number | null;
   status: string;
 };
@@ -112,8 +112,10 @@ async function productsShopee(): Promise<CatalogProduct[]> {
   for (const batch of chunk(ids.slice(0, MAX_PRODUCTS), 40)) {
     const res = await tiopsTool<any>("shopee_get_items_batch", { item_id_list: batch });
     for (const it of res?.data?.response?.item_list ?? []) {
-      const price =
+      const rawPrice =
         num(it?.price_info?.[0]?.current_price) || num(it?.price_info?.[0]?.original_price);
+      // Anúncios com variação não têm preço no nível do item — o preço vive em cada variação.
+      const price = rawPrice > 0 ? rawPrice : null;
       const stock =
         it?.stock_info_v2?.summary_info?.total_available_stock ??
         it?.stock_info_v2?.summary_info?.total_reserved_stock;
