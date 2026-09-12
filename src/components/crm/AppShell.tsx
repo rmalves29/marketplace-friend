@@ -6,6 +6,7 @@ import {
   Package,
   MessageSquare,
   Megaphone,
+  Handshake,
   Plug,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -15,6 +16,7 @@ const NAV = [
   { to: "/pedidos", label: "Pedidos", icon: ShoppingBag },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/produtos", label: "Produtos", icon: Package },
+  { to: "/afiliados", label: "Afiliados", icon: Handshake },
   { to: "/mensagens", label: "Mensagens", icon: MessageSquare },
   { to: "/anuncios", label: "Anúncios", icon: Megaphone },
   { to: "/integracoes", label: "Integrações", icon: Plug },
