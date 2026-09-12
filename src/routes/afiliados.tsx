@@ -10,6 +10,22 @@ import { money, tiopsChan } from "@/lib/crm";
 import { formatRange } from "@/lib/period";
 import { tiopsAffiliates } from "@/lib/tiops.functions";
 
+const CHANNEL_STATUS: Array<{
+  channel: "shopee" | "tiktok_shop" | "meli" | "shein";
+  note: string;
+}> = [
+  { channel: "shopee", note: "Programa de afiliados ativo." },
+  { channel: "tiktok_shop", note: "Criadores/afiliados disponíveis." },
+  {
+    channel: "meli",
+    note: "Não possui programa de afiliados para o vendedor nesta integração.",
+  },
+  {
+    channel: "shein",
+    note: "Não possui programa de afiliados para o vendedor nesta integração.",
+  },
+];
+
 export const Route = createFileRoute("/afiliados")({
   head: () => ({
     meta: [
@@ -131,10 +147,26 @@ function Afiliados() {
             </table>
           </div>
         )}
-        <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
-          Mercado Livre e Shein não têm programa de afiliados nesta integração, por isso não
-          aparecem aqui.
-        </p>
+      </Panel>
+
+      <Panel className="mt-6">
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="text-sm font-semibold">Situação por canal</h2>
+        </div>
+        <ul className="divide-y divide-border">
+          {CHANNEL_STATUS.map((c) => {
+            const live = (data?.channels ?? []).find((x) => x.channel === c.channel);
+            const count = (data?.affiliates ?? []).filter((a) => a.channel === c.channel).length;
+            return (
+              <li key={c.channel} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                <Chip label={tiopsChan(c.channel).label} token={tiopsChan(c.channel).token} />
+                <span className="text-muted-foreground">
+                  {live?.error ? live.error : live ? `${count} afiliado(s) no período` : c.note}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </Panel>
     </AppShell>
   );
