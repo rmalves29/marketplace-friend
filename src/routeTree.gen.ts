@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AfiliadosRouteImport } from './routes/afiliados'
 import { Route as AnunciosRouteImport } from './routes/anuncios'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as IntegracoesRouteImport } from './routes/integracoes'
@@ -20,6 +21,11 @@ import { Route as ProdutosRouteImport } from './routes/produtos'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AfiliadosRoute = AfiliadosRouteImport.update({
+  id: '/afiliados',
+  path: '/afiliados',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnunciosRoute = AnunciosRouteImport.update({
@@ -55,6 +61,7 @@ const ProdutosRoute = ProdutosRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/afiliados': typeof AfiliadosRoute
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/afiliados': typeof AfiliadosRoute
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/afiliados': typeof AfiliadosRoute
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/afiliados'
     | '/anuncios'
     | '/clientes'
     | '/integracoes'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/afiliados'
     | '/anuncios'
     | '/clientes'
     | '/integracoes'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/afiliados'
     | '/anuncios'
     | '/clientes'
     | '/integracoes'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AfiliadosRoute: typeof AfiliadosRoute
   AnunciosRoute: typeof AnunciosRoute
   ClientesRoute: typeof ClientesRoute
   IntegracoesRoute: typeof IntegracoesRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/afiliados': {
+      id: '/afiliados'
+      path: '/afiliados'
+      fullPath: '/afiliados'
+      preLoaderRoute: typeof AfiliadosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/anuncios': {
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AfiliadosRoute: AfiliadosRoute,
   AnunciosRoute: AnunciosRoute,
   ClientesRoute: ClientesRoute,
   IntegracoesRoute: IntegracoesRoute,

@@ -195,6 +195,105 @@ export const tiopsOrders = createServerFn({ method: "POST" })
     };
   });
 
+export type CancellationsPayload = {
+  from: string;
+  to: string;
+  channels: Array<{ channel: ChannelId; to: string; error: string | null; count: number }>;
+  cancelled: Array<{
+    channel: ChannelId;
+    id: string;
+    date: string;
+    total: number;
+    reason: string | null;
+    cancelledBy: string | null;
+    customer: string | null;
+  }>;
+  totals: { count: number; value: number; validOrders: number; rate: number };
+  topReason: { reason: string; count: number } | null;
+};
+
+export const tiopsCancellations = createServerFn({ method: "POST" })
+  .inputValidator((input: { from: string; to: string }) => {
+    if (!RANGE.test(input.from) || !RANGE.test(input.to)) throw new Error("Datas inválidas");
+    if (input.from > input.to) throw new Error("Início posterior ao fim");
+    return input;
+  })
+  .handler(async ({ data }): Promise<CancellationsPayload> => {
+    const { fetchChannelCancellations } = await import("./tiops-insights.server");
+    const { fetchChannelOrders } = await import("./tiops-orders.server");
+    const today = todayIsoBrt();
+
+    const [cancelRes, orderRes] = await Promise.all([
+      Promise.all(CHANNEL_IDS.map((c) => fetchChannelCancellations(c, data.from, data.to, today))),
+      Promise.all(CHANNEL_IDS.map((c) => fetchChannelOrders(c, data.from, data.to, today))),
+    ]);
+
+    const cancelled = cancelRes
+      .flatMap((r) => r.cancelled)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const validOrders = orderRes.reduce(
+      (s, r) => s + r.orders.filter((o) => !o.cancelled).length,
+      0,
+    );
+    const value = cancelled.reduce((s, c) => s + c.total, 0);
+
+    const reasons = new Map<string, number>();
+    for (const c of cancelled) {
+      if (!c.reason) continue;
+      reasons.set(c.reason, (reasons.get(c.reason) ?? 0) + 1);
+    }
+    const top = [...reasons.entries()].sort((a, b) => b[1] - a[1])[0];
+
+    const denominator = validOrders + cancelled.length;
+    return {
+      from: data.from,
+      to: data.to,
+      channels: cancelRes.map((r) => ({
+        channel: r.channel,
+        to: r.to,
+        error: r.error,
+        count: r.cancelled.length,
+      })),
+      cancelled,
+      totals: {
+        count: cancelled.length,
+        value,
+        validOrders,
+        rate: denominator ? cancelled.length / denominator : 0,
+      },
+      topReason: top ? { reason: top[0], count: top[1] } : null,
+    };
+  });
+
+export const tiopsAffiliates = createServerFn({ method: "POST" })
+  .inputValidator((input: { from: string; to: string }) => {
+    if (!RANGE.test(input.from) || !RANGE.test(input.to)) throw new Error("Datas inválidas");
+    if (input.from > input.to) throw new Error("Início posterior ao fim");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const { fetchChannelAffiliates } = await import("./tiops-insights.server");
+    const today = todayIsoBrt();
+    const results = await Promise.all(
+      (["shopee", "tiktok_shop"] as const).map((c) =>
+        fetchChannelAffiliates(c, data.from, data.to, today),
+      ),
+    );
+    const affiliates = results.flatMap((r) => r.affiliates).sort((a, b) => b.sales - a.sales);
+    return {
+      from: data.from,
+      to: data.to,
+      channels: results.map((r) => ({ channel: r.channel, error: r.error })),
+      affiliates,
+      totals: {
+        affiliates: affiliates.length,
+        sales: affiliates.reduce((s, a) => s + a.sales, 0),
+        commission: affiliates.reduce((s, a) => s + a.commission, 0),
+        orders: affiliates.reduce((s, a) => s + a.orders, 0),
+      },
+    };
+  });
+
 export const tiopsProducts = createServerFn({ method: "GET" }).handler(async () => {
   const { fetchChannelProducts } = await import("./tiops-catalog.server");
   const results = await Promise.all(CHANNEL_IDS.map((c) => fetchChannelProducts(c)));
