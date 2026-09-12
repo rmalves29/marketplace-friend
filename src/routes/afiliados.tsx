@@ -10,6 +10,22 @@ import { money, tiopsChan } from "@/lib/crm";
 import { formatRange } from "@/lib/period";
 import { tiopsAffiliates } from "@/lib/tiops.functions";
 
+const CHANNEL_STATUS: Array<{
+  channel: "shopee" | "tiktok_shop" | "meli" | "shein";
+  note: string;
+}> = [
+  { channel: "shopee", note: "Programa de afiliados ativo." },
+  { channel: "tiktok_shop", note: "Criadores/afiliados disponíveis." },
+  {
+    channel: "meli",
+    note: "Não possui programa de afiliados para o vendedor nesta integração.",
+  },
+  {
+    channel: "shein",
+    note: "Não possui programa de afiliados para o vendedor nesta integração.",
+  },
+];
+
 export const Route = createFileRoute("/afiliados")({
   head: () => ({
     meta: [
