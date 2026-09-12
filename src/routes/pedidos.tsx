@@ -2,12 +2,45 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { XCircle, Wallet, Percent, AlertTriangle } from "lucide-react";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { Chip } from "@/components/crm/Chip";
+import { StatCard } from "@/components/crm/StatCard";
 import { usePeriod } from "@/components/crm/PeriodFilter";
 import { money, dateTime, tiopsChan, TIOPS_CHANNELS } from "@/lib/crm";
 import { formatRange } from "@/lib/period";
-import { tiopsOrders } from "@/lib/tiops.functions";
+import { tiopsOrders, tiopsCancellations } from "@/lib/tiops.functions";
+
+const STATUS_TABS = [
+  { key: "valid", label: "Válidos" },
+  { key: "cancelled", label: "Cancelados" },
+] as const;
+
+function StatusTabs({
+  status,
+  setStatus,
+}: {
+  status: "valid" | "cancelled";
+  setStatus: (s: "valid" | "cancelled") => void;
+}) {
+  return (
+    <div className="mb-4 flex gap-2">
+      {STATUS_TABS.map((t) => (
+        <button
+          key={t.key}
+          onClick={() => setStatus(t.key)}
+          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            status === t.key
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/pedidos")({
   head: () => ({
