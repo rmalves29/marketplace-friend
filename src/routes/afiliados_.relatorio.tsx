@@ -10,7 +10,7 @@ import { money, tiopsChan } from "@/lib/crm";
 import { formatRange } from "@/lib/period";
 import { tiopsAffiliates } from "@/lib/tiops.functions";
 
-export const Route = createFileRoute("/afiliados/relatorio")({
+export const Route = createFileRoute("/afiliados_/relatorio")({
   head: () => ({
     meta: [
       { title: "Relatório de afiliados | Tiops CRM" },

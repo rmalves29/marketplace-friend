@@ -17,7 +17,7 @@ import { Route as IntegracoesRouteImport } from './routes/integracoes'
 import { Route as MensagensRouteImport } from './routes/mensagens'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as ProdutosRouteImport } from './routes/produtos'
-import { Route as AfiliadosRelatorioRouteImport } from './routes/afiliados.relatorio'
+import { Route as AfiliadosRelatorioRouteImport } from './routes/afiliados_.relatorio'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -60,14 +60,14 @@ const ProdutosRoute = ProdutosRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AfiliadosRelatorioRoute = AfiliadosRelatorioRouteImport.update({
-  id: '/relatorio',
-  path: '/relatorio',
-  getParentRoute: () => AfiliadosRoute,
+  id: '/afiliados_/relatorio',
+  path: '/afiliados/relatorio',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/afiliados': typeof AfiliadosRouteWithChildren
+  '/afiliados': typeof AfiliadosRoute
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
@@ -78,7 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/afiliados': typeof AfiliadosRouteWithChildren
+  '/afiliados': typeof AfiliadosRoute
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
@@ -90,14 +90,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/afiliados': typeof AfiliadosRouteWithChildren
+  '/afiliados': typeof AfiliadosRoute
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
   '/mensagens': typeof MensagensRoute
   '/pedidos': typeof PedidosRoute
   '/produtos': typeof ProdutosRoute
-  '/afiliados/relatorio': typeof AfiliadosRelatorioRoute
+  '/afiliados_/relatorio': typeof AfiliadosRelatorioRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,18 +132,19 @@ export interface FileRouteTypes {
     | '/mensagens'
     | '/pedidos'
     | '/produtos'
-    | '/afiliados/relatorio'
+    | '/afiliados_/relatorio'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AfiliadosRoute: typeof AfiliadosRouteWithChildren
+  AfiliadosRoute: typeof AfiliadosRoute
   AnunciosRoute: typeof AnunciosRoute
   ClientesRoute: typeof ClientesRoute
   IntegracoesRoute: typeof IntegracoesRoute
   MensagensRoute: typeof MensagensRoute
   PedidosRoute: typeof PedidosRoute
   ProdutosRoute: typeof ProdutosRoute
+  AfiliadosRelatorioRoute: typeof AfiliadosRelatorioRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -204,37 +205,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProdutosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/afiliados/relatorio': {
-      id: '/afiliados/relatorio'
-      path: '/relatorio'
+    '/afiliados_/relatorio': {
+      id: '/afiliados_/relatorio'
+      path: '/afiliados/relatorio'
       fullPath: '/afiliados/relatorio'
       preLoaderRoute: typeof AfiliadosRelatorioRouteImport
-      parentRoute: typeof AfiliadosRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AfiliadosRouteChildren {
-  AfiliadosRelatorioRoute: typeof AfiliadosRelatorioRoute
-}
-
-const AfiliadosRouteChildren: AfiliadosRouteChildren = {
-  AfiliadosRelatorioRoute: AfiliadosRelatorioRoute,
-}
-
-const AfiliadosRouteWithChildren = AfiliadosRoute._addFileChildren(
-  AfiliadosRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AfiliadosRoute: AfiliadosRouteWithChildren,
+  AfiliadosRoute: AfiliadosRoute,
   AnunciosRoute: AnunciosRoute,
   ClientesRoute: ClientesRoute,
   IntegracoesRoute: IntegracoesRoute,
   MensagensRoute: MensagensRoute,
   PedidosRoute: PedidosRoute,
   ProdutosRoute: ProdutosRoute,
+  AfiliadosRelatorioRoute: AfiliadosRelatorioRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
