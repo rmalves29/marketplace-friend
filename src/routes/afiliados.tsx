@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Users, Wallet, ShoppingBag } from "lucide-react";
+import { Users, Wallet, ShoppingBag, FileBarChart } from "lucide-react";
 import { AppShell, Panel, EmptyState } from "@/components/crm/AppShell";
 import { StatCard } from "@/components/crm/StatCard";
 import { Chip } from "@/components/crm/Chip";
@@ -63,7 +63,18 @@ function Afiliados() {
     <AppShell
       title="Afiliados"
       subtitle={`Vendas por afiliados e criadores · ${formatRange(range.from, range.to)}`}
-      actions={control}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          {control}
+          <Link
+            to="/afiliados/relatorio"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
+          >
+            <FileBarChart className="size-4" />
+            Relatório gerencial
+          </Link>
+        </div>
+      }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

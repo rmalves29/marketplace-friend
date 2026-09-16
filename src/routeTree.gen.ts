@@ -17,6 +17,7 @@ import { Route as IntegracoesRouteImport } from './routes/integracoes'
 import { Route as MensagensRouteImport } from './routes/mensagens'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as ProdutosRouteImport } from './routes/produtos'
+import { Route as AfiliadosRelatorioRouteImport } from './routes/afiliados.relatorio'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,37 +59,45 @@ const ProdutosRoute = ProdutosRouteImport.update({
   path: '/produtos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AfiliadosRelatorioRoute = AfiliadosRelatorioRouteImport.update({
+  id: '/relatorio',
+  path: '/relatorio',
+  getParentRoute: () => AfiliadosRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/afiliados': typeof AfiliadosRoute
+  '/afiliados': typeof AfiliadosRouteWithChildren
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
   '/mensagens': typeof MensagensRoute
   '/pedidos': typeof PedidosRoute
   '/produtos': typeof ProdutosRoute
+  '/afiliados/relatorio': typeof AfiliadosRelatorioRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/afiliados': typeof AfiliadosRoute
+  '/afiliados': typeof AfiliadosRouteWithChildren
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
   '/mensagens': typeof MensagensRoute
   '/pedidos': typeof PedidosRoute
   '/produtos': typeof ProdutosRoute
+  '/afiliados/relatorio': typeof AfiliadosRelatorioRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/afiliados': typeof AfiliadosRoute
+  '/afiliados': typeof AfiliadosRouteWithChildren
   '/anuncios': typeof AnunciosRoute
   '/clientes': typeof ClientesRoute
   '/integracoes': typeof IntegracoesRoute
   '/mensagens': typeof MensagensRoute
   '/pedidos': typeof PedidosRoute
   '/produtos': typeof ProdutosRoute
+  '/afiliados/relatorio': typeof AfiliadosRelatorioRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/mensagens'
     | '/pedidos'
     | '/produtos'
+    | '/afiliados/relatorio'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/mensagens'
     | '/pedidos'
     | '/produtos'
+    | '/afiliados/relatorio'
   id:
     | '__root__'
     | '/'
@@ -121,11 +132,12 @@ export interface FileRouteTypes {
     | '/mensagens'
     | '/pedidos'
     | '/produtos'
+    | '/afiliados/relatorio'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AfiliadosRoute: typeof AfiliadosRoute
+  AfiliadosRoute: typeof AfiliadosRouteWithChildren
   AnunciosRoute: typeof AnunciosRoute
   ClientesRoute: typeof ClientesRoute
   IntegracoesRoute: typeof IntegracoesRoute
@@ -192,12 +204,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProdutosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/afiliados/relatorio': {
+      id: '/afiliados/relatorio'
+      path: '/relatorio'
+      fullPath: '/afiliados/relatorio'
+      preLoaderRoute: typeof AfiliadosRelatorioRouteImport
+      parentRoute: typeof AfiliadosRoute
+    }
   }
 }
 
+interface AfiliadosRouteChildren {
+  AfiliadosRelatorioRoute: typeof AfiliadosRelatorioRoute
+}
+
+const AfiliadosRouteChildren: AfiliadosRouteChildren = {
+  AfiliadosRelatorioRoute: AfiliadosRelatorioRoute,
+}
+
+const AfiliadosRouteWithChildren = AfiliadosRoute._addFileChildren(
+  AfiliadosRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AfiliadosRoute: AfiliadosRoute,
+  AfiliadosRoute: AfiliadosRouteWithChildren,
   AnunciosRoute: AnunciosRoute,
   ClientesRoute: ClientesRoute,
   IntegracoesRoute: IntegracoesRoute,
