@@ -161,7 +161,6 @@ function Afiliados() {
           </div>
           <div className="space-y-3">
           {activeChannels.map((channel) => {
-            const live = (data?.channels ?? []).find((item) => item.channel === channel);
             const channelAffiliates = affiliates.filter((affiliate) => affiliate.channel === channel);
             const channelSales = channelAffiliates.reduce((sum, affiliate) => sum + affiliate.sales, 0);
             return (
