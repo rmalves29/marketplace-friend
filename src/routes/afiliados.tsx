@@ -89,7 +89,6 @@ function Afiliados() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const errors = (data?.channels ?? []).filter((c) => c.error);
   const affiliates = data?.affiliates ?? [];
   const totals = data?.totals ?? { affiliates: 0, sales: 0, commission: 0, orders: 0 };
   const items = affiliates.reduce((sum, affiliate) => sum + affiliate.itemsSold, 0);
@@ -152,60 +151,42 @@ function Afiliados() {
         />
       </div>
 
-      {errors.length > 0 ? (
-        <Panel className="mt-6 p-4 text-xs text-muted-foreground">
-          {errors.map((c) => (
-            <p key={c.channel}>
-              {tiopsChan(c.channel).label}: {c.error}
-            </p>
-          ))}
-        </Panel>
-      ) : null}
-
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold">Canais de afiliados</h2>
-            <span className="text-xs text-muted-foreground">{activeChannels.length} disponível</span>
+            <span className="text-xs text-muted-foreground">
+              {activeChannels.length} {activeChannels.length === 1 ? "disponível" : "disponíveis"}
+            </span>
           </div>
           <div className="space-y-3">
-          {AFFILIATE_CHANNELS.map((channel) => {
-            const live = (data?.channels ?? []).find((item) => item.channel === channel);
+          {activeChannels.map((channel) => {
             const channelAffiliates = affiliates.filter((affiliate) => affiliate.channel === channel);
             const channelSales = channelAffiliates.reduce((sum, affiliate) => sum + affiliate.sales, 0);
-            const ready = Boolean(live && !live.error);
             return (
               <Panel key={channel} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className={`grid size-10 shrink-0 place-items-center rounded-lg font-display text-sm font-bold ${ready ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                    <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary font-display text-sm font-bold text-primary-foreground">
                       {channel === "shopee" ? "S" : "T"}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{tiopsChan(channel).label}</p>
-                      <p className={`mt-0.5 text-xs ${ready ? "text-success" : "text-warning"}`}>
-                        {ready ? "Dados disponíveis" : "Aguardando autorização"}
-                      </p>
+                      <p className="mt-0.5 text-xs text-success">Dados disponíveis</p>
                     </div>
                   </div>
-                  <span className={`mt-1 size-2 shrink-0 rounded-full ${ready ? "bg-success" : "bg-warning"}`} />
+                  <span className="mt-1 size-2 shrink-0 rounded-full bg-success" />
                 </div>
-                {ready ? (
-                  <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
-                    <div>
-                      <p className="text-muted-foreground">Afiliados</p>
-                      <p className="mt-1 font-semibold text-foreground">{channelAffiliates.length}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">GMV</p>
-                      <p className="mt-1 font-semibold text-foreground">{money(channelSales)}</p>
-                    </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
+                  <div>
+                    <p className="text-muted-foreground">Afiliados</p>
+                    <p className="mt-1 font-semibold text-foreground">{channelAffiliates.length}</p>
                   </div>
-                ) : (
-                  <p className="mt-4 border-t border-border pt-3 text-xs leading-5 text-muted-foreground">
-                    O canal oferece afiliados, mas ainda não liberou os dados para esta integração.
-                  </p>
-                )}
+                  <div>
+                    <p className="text-muted-foreground">GMV</p>
+                    <p className="mt-1 font-semibold text-foreground">{money(channelSales)}</p>
+                  </div>
+                </div>
               </Panel>
             );
           })}
